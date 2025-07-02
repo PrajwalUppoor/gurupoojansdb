@@ -1,8 +1,13 @@
 import openpyxl
 import os
 import requests
+import pandas as pd
 
+# --- Constants ---
+NAGAR_ID = "668d00a0529dc546a1f242e0"  # Padmanabhanagar
+ENTITY_URL = "https://kardakshinprant.pinkrafter.in/api/entityChildren"
 EXCEL_FILE = "ssdata.xlsx"
+
 HEADERS = {
     "accept": "application/json",
     "content-type": "application/json",
@@ -10,13 +15,18 @@ HEADERS = {
     "referer": "https://kardakshinprant.pinkrafter.in/addSSDetails",
     "user-agent": "Mozilla/5.0"
 }
+
 _entity_cache = {}
+
+# --- Excel Operations ---
 def load_data():
     if not os.path.exists(EXCEL_FILE):
         return []
+
     wb = openpyxl.load_workbook(EXCEL_FILE)
     ws = wb.active
-    headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+    headers = [str(cell.value).strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
     return [dict(zip(headers, [cell.value for cell in row])) for row in ws.iter_rows(min_row=2)]
 
 def save_row(row):
@@ -30,6 +40,13 @@ def save_row(row):
     ws.append(list(row.values()))
     wb.save(EXCEL_FILE)
 
+def delete_row(index):
+    wb = openpyxl.load_workbook(EXCEL_FILE)
+    ws = wb.active
+    ws.delete_rows(index + 2)  # +2 to account for header row and 0-based index
+    wb.save(EXCEL_FILE)
+
+# --- API Calls ---
 def submit_entry(row):
     response = requests.post(
         "https://kardakshinprant.pinkrafter.in/api/createSSData",
@@ -37,12 +54,6 @@ def submit_entry(row):
         json=row
     )
     return response.status_code == 200, response.text
-def delete_row(index):
-    import openpyxl
-    wb = openpyxl.load_workbook(EXCEL_FILE)
-    ws = wb.active
-    ws.delete_rows(index + 2)  # +2 because Excel rows are 1-indexed and row 1 is header
-    wb.save(EXCEL_FILE)
 
 def get_entity_children(parent_id):
     if parent_id in _entity_cache:
@@ -59,6 +70,7 @@ def get_entity_children(parent_id):
 
     return []
 
+# --- ID ↔ Name Mapping ---
 def build_id_name_map():
     """Build a map of {id: name} for all vasatis and upavasatis"""
     id_name_map = {}
@@ -85,4 +97,3 @@ def map_ids_to_names(df):
     df["upavasati"] = df["upavasati"].apply(resolve)
 
     return df
-
