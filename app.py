@@ -15,7 +15,7 @@ st.set_page_config(
 language = st.selectbox("🌐 Choose Language / ಭಾಷೆ ಆಯ್ಕೆ", ["English", "ಕನ್ನಡ"])
 
 # --- OM Symbol ---
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Om_symbol.svg/512px-Om_symbol.svg.png", width=100)
+st.image("https://hindutone.com/wp-content/uploads/2024/11/rss-1296x700.webp", width=100)
 
 # --- English Content ---
 if language == "English":
