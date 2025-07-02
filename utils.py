@@ -37,3 +37,10 @@ def submit_entry(row):
         json=row
     )
     return response.status_code == 200, response.text
+def delete_row(index):
+    import openpyxl
+    wb = openpyxl.load_workbook(EXCEL_FILE)
+    ws = wb.active
+    ws.delete_rows(index + 2)  # +2 because Excel rows are 1-indexed and row 1 is header
+    wb.save(EXCEL_FILE)
+
