@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import load_data, submit_entry, delete_row
+from utils import load_data, submit_entry, delete_row, map_ids_to_names
 import plotly.express as px
 
 st.set_page_config(
@@ -38,6 +38,10 @@ def refresh_table():
     st.session_state.rows = load_data()
     df = pd.DataFrame(st.session_state.rows)
     df.columns = [col.strip().lower() for col in df.columns]  # Normalize columns
+
+    # Map vasati/upavasati IDs to names
+    df = map_ids_to_names(df)
+
     st.session_state.df = df
 
 if "rows" not in st.session_state:
