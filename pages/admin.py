@@ -36,7 +36,9 @@ if st.sidebar.button("🚪 Logout"):
 # --- Load Data ---
 def refresh_table():
     st.session_state.rows = load_data()
-    st.session_state.df = pd.DataFrame(st.session_state.rows)
+    df = pd.DataFrame(st.session_state.rows)
+    df.columns = [col.strip().lower() for col in df.columns]  # Normalize columns
+    st.session_state.df = df
 
 if "rows" not in st.session_state:
     refresh_table()
@@ -53,12 +55,13 @@ else:
 
 # --- Delete Section ---
 st.markdown("### 🗑️ Delete an Entry")
-delete_index = st.selectbox("Select row to delete (by index)", df.index, format_func=lambda i: f"{df.loc[i, 'name']} ({df.loc[i, 'phone']})")
-if st.button("Confirm Delete"):
-    delete_row(delete_index)
-    st.success(f"✅ Deleted: {df.loc[delete_index, 'name']}")
-    refresh_table()
-    st.rerun()
+if not df.empty:
+    delete_index = st.selectbox("Select row to delete (by index)", df.index, format_func=lambda i: f"{df.loc[i, 'name']} ({df.loc[i, 'phone']})")
+    if st.button("Confirm Delete"):
+        delete_row(delete_index)
+        st.success(f"✅ Deleted: {df.loc[delete_index, 'name']}")
+        refresh_table()
+        st.rerun()
 
 # --- Download Full CSV ---
 csv_full = df.to_csv(index=False).encode("utf-8")
@@ -80,6 +83,12 @@ if st.button("Upload All"):
 st.markdown("---")
 st.subheader("🔍 Search by Vasati & Upavasati")
 
+# ✅ Prevent error if Excel is empty
+if df.empty or "vasati" not in df.columns:
+    st.warning("No records available to search or filter yet.")
+    st.stop()
+
+# --- Filter Form ---
 with st.form("filter_form"):
     vasatis = df["vasati"].dropna().unique()
     selected_vasati = st.selectbox("Select Vasati", ["All"] + sorted(vasatis.tolist()))
