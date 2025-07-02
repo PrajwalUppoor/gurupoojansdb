@@ -75,7 +75,7 @@ responsibility_options = [
 ]
 
 # Title
-st.title("Guru Pooja Utsava Nagagiri Shake Form")
+st.title("SwayamSevak Information- RSS Padmanabhanagara")
 
 name = st.text_input("Name *")
 phone = st.text_input("Phone *")
