@@ -8,12 +8,12 @@ st.set_page_config(
 )
 
 # --- Title & Welcome ---
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Om_symbol.svg/512px-Om_symbol.svg.png", width=100)
-st.title("🙏 Guru Pooja Utsava – Nagagiri Shake")
+st.image("https://hindutone.com/wp-content/uploads/2024/11/rss-1296x700.webp", width=100)
+st.title("🙏 Guru Pooja Utsava – Padmanabhanagara")
 
 st.markdown(
     """
-    Welcome! Kindly take a moment to share your details for this year's **Guru Pooja Utsava** at **Nagagiri Shake**.
+    Welcome! Kindly take a moment to share your details for this year's **Guru Pooja Utsava**.
 
     Your participation helps us plan and serve better.  
     Please click below to proceed to the form.
