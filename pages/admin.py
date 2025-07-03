@@ -11,7 +11,8 @@ from utils import (
     map_ids_to_names,
     export_to_excel,
     update_db_entry,
-    get_id_by_name
+    get_id_by_name,
+    get_entity_children
 )
 from models import SHAKHA_NAMES
 
