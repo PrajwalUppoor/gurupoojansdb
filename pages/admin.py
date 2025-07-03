@@ -140,15 +140,17 @@ if not raw_df.empty:
                     "upavasati": upavasati_id,
                 }
 
-                # Remove empty strings or nulls if not needed by API
+               # Remove empty/NaN
                 payload = {k: v for k, v in payload.items() if v not in [None, "", "NaN", "nan"]}
 
-                ok, _ = submit_entry(payload)
+                ok, res = submit_entry(payload)
                 if ok:
                     success += 1
                 else:
+                    st.error(f"❌ API rejected entry: {res}")
                     failed += 1
-            except Exception:
+            except Exception as e:
+                st.error(f"❌ Exception for {row_dict.get('name')}: {e}")
                 failed += 1
 
         st.success(f"✅ Uploaded: {success} entries | ❌ Failed: {failed}")
