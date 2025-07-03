@@ -1,13 +1,36 @@
 # utils.py
-import os
-import openpyxl
-import requests
+
 from db import SessionLocal
 from models import Swayamsevak
+import pandas as pd
+import openpyxl
+import os
+import requests
 
-# API Constants
-NAGAR_ID = "668d00a0529dc546a1f242e0"
-ENTITY_URL = "https://kardakshinprant.pinkrafter.in/api/entityChildren"
+# --- DB Load ---
+def load_from_db(shakhe=None):
+    db = SessionLocal()
+    query = db.query(Swayamsevak)
+    if shakhe:
+        query = query.filter(Swayamsevak.shakhe == shakhe)
+    rows = query.all()
+    db.close()
+    return pd.DataFrame([row.__dict__ for row in rows])
+
+# --- DB Delete ---
+def delete_from_db(row_id):
+    db = SessionLocal()
+    db.query(Swayamsevak).filter(Swayamsevak.id == row_id).delete()
+    db.commit()
+    db.close()
+
+# --- Excel Export ---
+def export_to_excel(df, filename):
+    file_path = os.path.join("data", filename)
+    df.to_excel(file_path, index=False)
+    return file_path
+
+# --- Submit to API ---
 HEADERS = {
     "accept": "application/json",
     "content-type": "application/json",
@@ -15,67 +38,48 @@ HEADERS = {
     "referer": "https://kardakshinprant.pinkrafter.in/addSSDetails",
     "user-agent": "Mozilla/5.0"
 }
+
+def submit_entry(row):
+    response = requests.post(
+        "https://kardakshinprant.pinkrafter.in/api/createSSData",
+        headers=HEADERS,
+        json=row
+    )
+    return response.status_code == 200, response.text
+
+# --- ID ↔ Name Mapping ---
+NAGAR_ID = "668d00a0529dc546a1f242e0"
+ENTITY_URL = "https://kardakshinprant.pinkrafter.in/api/entityChildren"
 _entity_cache = {}
 
-# --- Save to DB ---
-def save_to_db(data):
-    db = SessionLocal()
-    db.add(Swayamsevak(**data))
-    db.commit()
-    db.close()
-
-# --- Excel Fallback ---
-def save_row(row, file_path):
-    if not os.path.exists(file_path):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.append(list(row.keys()))
-    else:
-        wb = openpyxl.load_workbook(file_path)
-        ws = wb.active
-    ws.append(list(row.values()))
-    wb.save(file_path)
-
-# --- API ---
 def get_entity_children(parent_id):
     if parent_id in _entity_cache:
         return _entity_cache[parent_id]
     try:
-        res = requests.get(f"{ENTITY_URL}?entityId={parent_id}", headers=HEADERS)
-        if res.status_code == 200:
-            _entity_cache[parent_id] = res.json()
-            return _entity_cache[parent_id]
+        response = requests.get(f"{ENTITY_URL}?entityId={parent_id}", headers=HEADERS)
+        if response.status_code == 200:
+            children = response.json()
+            _entity_cache[parent_id] = children
+            return children
     except Exception as e:
-        print("⚠️ Error fetching children:", e)
+        print("⚠️ Failed to fetch entity children:", e)
     return []
 
-def get_id_by_name(children, name):
-    for child in children:
-        if child["name"].strip().lower() == name.strip().lower():
-            return child["_id"]
-    return None
-
-# --- ID-to-Name mapping ---
 def build_id_name_map():
     id_name_map = {}
-    for vasati in get_entity_children(NAGAR_ID):
-        id_name_map[vasati["_id"]] = vasati["name"]
-        for upa in get_entity_children(vasati["_id"]):
-            id_name_map[upa["_id"]] = upa["name"]
+    vasatis = get_entity_children(NAGAR_ID)
+    for vasati in vasatis:
+        vasati_id = vasati["_id"]
+        id_name_map[vasati_id] = vasati["name"]
+        for upavasati in get_entity_children(vasati_id):
+            id_name_map[upavasati["_id"]] = upavasati["name"]
     return id_name_map
 
 def map_ids_to_names(df):
-    mapping = build_id_name_map()
+    id_name_map = build_id_name_map()
+    def resolve(val): return id_name_map.get(val, val)
     if "vasati" in df.columns:
-        df["vasati"] = df["vasati"].apply(lambda v: mapping.get(v, v))
+        df["vasati"] = df["vasati"].apply(resolve)
     if "upavasati" in df.columns:
-        df["upavasati"] = df["upavasati"].apply(lambda v: mapping.get(v, v))
+        df["upavasati"] = df["upavasati"].apply(resolve)
     return df
-
-# --- API Submission (Optional Push) ---
-def submit_entry(row):
-    try:
-        res = requests.post("https://kardakshinprant.pinkrafter.in/api/createSSData", headers=HEADERS, json=row)
-        return res.status_code == 200, res.text
-    except Exception as e:
-        return False, str(e)
