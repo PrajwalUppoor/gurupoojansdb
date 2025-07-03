@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import json
 
 from utils import (
     load_from_db,
@@ -142,12 +143,22 @@ if not raw_df.empty:
                     "vibhag": VIBHAG_ID,
                     "nagar": NAGAR_ID,
                     "vasati": vasati_id,
-                    "bhag":BHAG_ID,
+                    "bhag": BHAG_ID,
                     "upavasati": upavasati_id,
                 }
 
-               # Remove empty/NaN
+                # Remove empty/NaN
                 payload = {k: v for k, v in payload.items() if v not in [None, "", "NaN", "nan"]}
+
+                # Log the curl equivalent
+                curl_cmd = f"""curl -X POST https://kardakshinprant.pinkrafter.in/api/createSSData \\
+  -H 'accept: application/json' \\
+  -H 'content-type: application/json' \\
+  -H 'origin: https://kardakshinprant.pinkrafter.in' \\
+  -H 'referer: https://kardakshinprant.pinkrafter.in/addSSDetails' \\
+  -H 'user-agent: Mozilla/5.0' \\
+  -d '{json.dumps(payload, ensure_ascii=False)}'"""
+                print("\n📤 CURL COMMAND:\n", curl_cmd)
 
                 ok, res = submit_entry(payload)
                 if ok:
