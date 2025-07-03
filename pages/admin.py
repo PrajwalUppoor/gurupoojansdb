@@ -42,12 +42,12 @@ if not df.empty:
     df = map_ids_to_names(df)
     st.dataframe(df, use_container_width=True)
 
-    # --- Download ---
+    # --- Download Excel ---
     file_path = export_to_excel(df, f"{selected_shakhe}.xlsx")
     with open(file_path, "rb") as f:
         st.download_button(
             "⬇ Download Excel",
-            f.read(),
+            data=f.read(),
             file_name=f"{selected_shakhe}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -56,9 +56,12 @@ if not df.empty:
     st.subheader("🗑️ Delete Entry")
     idx_to_delete = st.selectbox("Choose Row to Delete", df.index)
     if st.button("Confirm Delete"):
-        delete_from_db(df.loc[idx_to_delete]["id"])
-        st.success("Deleted successfully")
-        st.rerun()
+        try:
+            delete_from_db(int(df.loc[idx_to_delete]["id"]))
+            st.success("Deleted successfully")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error during delete: {e}")
 
     # --- Submit to API ---
     st.subheader("📤 Push to API")
