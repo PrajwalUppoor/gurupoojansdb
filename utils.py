@@ -2,6 +2,9 @@ import openpyxl
 import os
 import requests
 import pandas as pd
+from db import SessionLocal
+from models import Swayamsevak
+
 
 # --- Constants ---
 NAGAR_ID = "668d00a0529dc546a1f242e0"  # Padmanabhanagar
@@ -17,6 +20,13 @@ HEADERS = {
 
 _entity_cache = {}
 
+
+def save_to_db(data):
+    db = SessionLocal()
+    entry = Swayamsevak(**data)
+    db.add(entry)
+    db.commit()
+    db.close()
 # --- Excel Operations ---
 def save_row(row, file_path):
     """Save a single row (dict) to the specified Excel file."""
