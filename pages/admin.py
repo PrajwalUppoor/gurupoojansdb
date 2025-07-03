@@ -99,6 +99,7 @@ if not raw_df.empty:
     PRANT_ID = "668cfdff529dc546a1f20929"
     VIBHAG_ID = "668cfe2b529dc546a1f2092b"
     NAGAR_ID = "668d00a0529dc546a1f242e0"
+    BHAG_ID = "668d0094529dc546a1f2409c"
 
     if st.button("Upload Shake Data"):
         success, failed = 0, 0
@@ -135,6 +136,7 @@ if not raw_df.empty:
                     "vibhag": VIBHAG_ID,
                     "nagar": NAGAR_ID,
                     "vasati": vasati_id,
+                    "bhag":BHAG_ID,
                     "upavasati": upavasati_id,
                 }
 
