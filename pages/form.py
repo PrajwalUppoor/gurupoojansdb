@@ -91,9 +91,11 @@ profession = st.selectbox("Profession *", professions)
 work = st.text_input("Work Details (Company, Designation) *")
 sanghShikshan = st.selectbox("Sangh Shikshan *", shikshan_options, index=shikshan_options.index("ಇನ್ನೂ ಆಗಬೇಕಿದೆ / Yet to attend"))
 sanghaResponsibility = st.selectbox("Sangha Responsibility *", responsibility_options, index=responsibility_options.index("ಸ್ವಯಂಸೇವಕ/Swayamsevak"))
-shakhe = "Naga Giri Prabhat"
-st.markdown(f"**Shake**: {shakhe}")
-
+shakha_options = [
+    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva",
+    "Keshava", "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
+]
+shakhe = st.selectbox("Shake *", shakha_options)
 # Fetch Vasati ONCE
 if "vasati_children" not in st.session_state:
     with st.spinner("Loading vasati options..."):
