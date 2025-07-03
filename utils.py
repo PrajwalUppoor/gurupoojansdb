@@ -117,3 +117,9 @@ def map_ids_to_names(df):
     if "upavasati" in df.columns:
         df["upavasati"] = df["upavasati"].apply(resolve)
     return df
+def update_db_entry(row_id, updated_data: dict):
+    db = SessionLocal()
+    db.query(Swayamsevak).filter(Swayamsevak.id == row_id).update(updated_data)
+    db.commit()
+    db.close()
+
