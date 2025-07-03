@@ -118,14 +118,17 @@ if not raw_df.empty:
         for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
+
                 vasati_list = get_entity_children(NAGAR_ID)
-                vasati_id = safe_get_id_by_name(vasati_list, row_dict.get("vasati"))
+                raw_vasati = row_dict.get("vasati", "").strip()
+                vasati_id = raw_vasati if any(v["_id"] == raw_vasati for v in vasati_list) else safe_get_id_by_name(vasati_list, raw_vasati)
 
                 upavasati_list = get_entity_children(vasati_id) if vasati_id else []
-                upavasati_id = safe_get_id_by_name(upavasati_list, row_dict.get("upavasati"))
+                raw_upavasati = row_dict.get("upavasati", "").strip()
+                upavasati_id = raw_upavasati if any(u["_id"] == raw_upavasati for u in upavasati_list) else safe_get_id_by_name(upavasati_list, raw_upavasati)
 
                 with st.expander(f"🔍 Debug: {row_dict.get('name')}"):
-                    st.write("Raw Vasati:", row_dict.get("vasati"))
+                    st.write("Raw Vasati:", raw_vasati)
                     st.write("Vasati List:", vasati_list)
                     st.write("Resolved Vasati ID:", vasati_id)
                     st.write("Upavasati List:", upavasati_list)
