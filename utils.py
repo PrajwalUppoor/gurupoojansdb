@@ -10,10 +10,21 @@ import requests
 
 def save_to_db(data):
     db = SessionLocal()
-    entry = Swayamsevak(**data)
+
+    # Filter only valid column names for Swayamsevak
+    valid_keys = {
+        "name", "phone", "email", "address1", "address2", "address3",
+        "pincode", "dob", "bloodgroup", "education", "profession", "work",
+        "sanghShikshan", "sanghaResponsibility", "sanghOrganizationName",
+        "otherResponsibility", "shakhe", "vasati", "upavasati"
+    }
+    filtered_data = {k: v for k, v in data.items() if k in valid_keys}
+
+    entry = Swayamsevak(**filtered_data)
     db.add(entry)
     db.commit()
     db.close()
+
 def get_id_by_name(children, name):
     for child in children:
         if child["name"].strip().lower() == name.strip().lower():
