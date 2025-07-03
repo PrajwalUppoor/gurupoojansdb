@@ -1,6 +1,10 @@
 # models.py
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
+SHAKHA_NAMES = [
+    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva",
+    "Keshava", "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
+]
 
 Base = declarative_base()
 
