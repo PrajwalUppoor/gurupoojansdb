@@ -138,5 +138,5 @@ if st.button("Submit"):
             "otherResponsibility": otherResponsibility
         }
 
-        save_row(data, f"{shakhe.lower()}.xlsx")
+        save_row(data)
         st.success("✅ Data submitted and saved to Excel successfully.")
