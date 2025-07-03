@@ -10,11 +10,9 @@ from utils import (
     submit_entry,
     map_ids_to_names,
     export_to_excel,
-    get_id_by_name,
 )
 from models import SHAKHA_NAMES
 
-# --- Config ---
 st.set_page_config(page_title="Admin - Guru Pooja", layout="wide")
 
 # --- Admin Login ---
@@ -36,12 +34,11 @@ if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.rerun()
 
-# --- Shake Selector ---
+# --- Shake Selection ---
 st.title("📋 Admin Panel - Guru Pooja")
 selected_shakhe = st.selectbox("Select Shake", SHAKHA_NAMES)
 df = load_from_db(selected_shakhe)
 
-# --- Display Data ---
 if not df.empty:
     df = map_ids_to_names(df)
     st.dataframe(df, use_container_width=True)
@@ -56,68 +53,31 @@ if not df.empty:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-    # --- Delete Entry ---
+    # --- Delete Entry by DB ID ---
     st.subheader("🗑️ Delete Entry")
-    idx_to_delete = st.selectbox("Choose Row to Delete", df.index)
-    if st.button("Confirm Delete"):
-        delete_from_db(df.loc[idx_to_delete]["id"])
-        st.success("Deleted successfully")
-        st.rerun()
+    delete_options = df[["id", "name"]].apply(lambda row: f"{row['id']}: {row['name']}", axis=1).tolist()
+    selected_label = st.selectbox("Select entry to delete", delete_options)
 
-    # --- Push to API ---
+    if selected_label:
+        selected_id = int(selected_label.split(":")[0])
+        if st.button("Confirm Delete"):
+            delete_from_db(selected_id)
+            st.success(f"Entry ID {selected_id} deleted successfully")
+            st.rerun()
+
+    # --- Submit to API ---
     st.subheader("📤 Push to API")
-    PRANT_ID = "668cfdff529dc546a1f20929"
-    VIBHAG_ID = "668cfe2b529dc546a1f2092b"
-    NAGAR_ID = "668d00a0529dc546a1f242e0"
-
     if st.button("Upload Shake Data"):
         success, failed = 0, 0
-
         for _, row in df.iterrows():
-            try:
-                row_dict = row.to_dict()
-
-                # Convert vasati/upavasati names to IDs
-                vasati_id = get_id_by_name(row_dict.get("vasati"))
-                upavasati_id = get_id_by_name(row_dict.get("upavasati"))
-
-                if not vasati_id or not upavasati_id:
-                    failed += 1
-                    continue
-
-                payload = {
-                    "name": row_dict.get("name", ""),
-                    "phone": row_dict.get("phone", ""),
-                    "email": row_dict.get("email", ""),
-                    "address1": row_dict.get("address1", ""),
-                    "address2": row_dict.get("address2", ""),
-                    "address3": row_dict.get("address3", ""),
-                    "pincode": row_dict.get("pincode", ""),
-                    "dob": row_dict.get("dob", ""),
-                    "bloodgroup": row_dict.get("bloodgroup", ""),
-                    "education": row_dict.get("education", ""),
-                    "profession": row_dict.get("profession", ""),
-                    "work": row_dict.get("work", ""),
-                    "sanghShikshan": row_dict.get("sanghShikshan", ""),
-                    "sanghaResponsibility": row_dict.get("sanghaResponsibility", ""),
-                    "sanghOrganizationName": row_dict.get("sanghOrganizationName", ""),
-                    "otherResponsibility": row_dict.get("otherResponsibility", ""),
-                    "shakhe": row_dict.get("shakhe", ""),
-                    "prant": PRANT_ID,
-                    "vibhag": VIBHAG_ID,
-                    "nagar": NAGAR_ID,
-                    "vasati": vasati_id,
-                    "upavasati": upavasati_id,
-                }
-
-                ok, _ = submit_entry(payload)
-                if ok:
-                    success += 1
-                else:
-                    failed += 1
-            except Exception as e:
+            full_row = row.to_dict()
+            # Remove unwanted columns like SQLAlchemy _sa_instance_state
+            full_row.pop("_sa_instance_state", None)
+            ok, _ = submit_entry(full_row)
+            if ok:
+                success += 1
+            else:
                 failed += 1
-
-        st.success(f"✅ Uploaded: {success} entries | ❌ Failed: {failed}")
+        st.success(f"Uploaded: ✅ {success}, ❌ {failed}")
 else:
     st.info("No entries yet for this Shake.")
