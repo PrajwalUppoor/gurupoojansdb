@@ -39,7 +39,10 @@ def load_from_db(shakhe=None):
         query = query.filter(Swayamsevak.shakhe == shakhe)
     rows = query.all()
     db.close()
-    return pd.DataFrame([row.__dict__ for row in rows])
+    return pd.DataFrame([
+        {k: v for k, v in row.__dict__.items() if not k.startswith('_')}
+        for row in rows
+    ])
 
 # --- DB Delete ---
 def delete_from_db(row_id):
