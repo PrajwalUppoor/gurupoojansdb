@@ -50,6 +50,13 @@ def delete_from_db(row_id):
 
 # --- Excel Export ---
 def export_to_excel(df, filename):
+    # Ensure it ends with .xlsx
+    if not filename.endswith(".xlsx"):
+        filename += ".xlsx"
+
+    # Ensure data directory exists
+    os.makedirs("data", exist_ok=True)
+
     file_path = os.path.join("data", filename)
     df.to_excel(file_path, index=False)
     return file_path
