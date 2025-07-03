@@ -14,6 +14,11 @@ def save_to_db(data):
     db.add(entry)
     db.commit()
     db.close()
+def get_id_by_name(children, name):
+    for child in children:
+        if child["name"].strip().lower() == name.strip().lower():
+            return child["_id"]
+    return None
 
 # --- DB Load ---
 def load_from_db(shakhe=None):
