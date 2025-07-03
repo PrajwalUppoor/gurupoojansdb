@@ -49,9 +49,9 @@ sanghShikshan = st.selectbox("Sangh Shikshan *", [
 ])
 
 sanghaResponsibility = st.selectbox("Sangha Responsibility *", [
+    "ಸ್ವಯಂಸೇವಕ/Swayamsevak",
     "ಸಂಘ ಜವಾಬ್ದಾರಿ/Sangha Responsibility",
     "ವಿವಿಧ ಕ್ಷೇತ್ರದ ಜವಾಬ್ದಾರಿ/Vividh Khsetra Responsibility",
-    "ಸ್ವಯಂಸೇವಕ/Swayamsevak"
 ])
 
 sanghOrganizationName, otherResponsibility = "", ""
