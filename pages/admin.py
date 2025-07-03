@@ -2,7 +2,14 @@
 import streamlit as st
 import pandas as pd
 import os
-from utils import load_from_db, delete_from_db, submit_entry, map_ids_to_names, export_to_excel
+
+from utils import (
+    load_from_db,
+    delete_from_db,
+    submit_entry,
+    map_ids_to_names,
+    export_to_excel,
+)
 from models import SHAKHA_NAMES
 
 st.set_page_config(page_title="Admin - Guru Pooja", layout="wide")
@@ -36,8 +43,14 @@ if not df.empty:
     st.dataframe(df, use_container_width=True)
 
     # --- Download ---
-    if st.download_button("⬇ Download Excel", export_to_excel(df, selected_shakhe), file_name=f"{selected_shakhe}.xlsx"):
-        st.success("Excel downloaded!")
+    file_path = export_to_excel(df, f"{selected_shakhe}.xlsx")
+    with open(file_path, "rb") as f:
+        st.download_button(
+            "⬇ Download Excel",
+            f.read(),
+            file_name=f"{selected_shakhe}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     # --- Delete Entry ---
     st.subheader("🗑️ Delete Entry")
@@ -53,8 +66,10 @@ if not df.empty:
         success, failed = 0, 0
         for _, row in df.iterrows():
             ok, _ = submit_entry(row.to_dict())
-            if ok: success += 1
-            else: failed += 1
+            if ok:
+                success += 1
+            else:
+                failed += 1
         st.success(f"Uploaded: ✅ {success}, ❌ {failed}")
 else:
     st.info("No entries yet for this Shake.")
