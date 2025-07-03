@@ -10,7 +10,8 @@ from utils import (
     submit_entry,
     map_ids_to_names,
     export_to_excel,
-    update_db_entry
+    update_db_entry,
+    get_id_by_name
 )
 from models import SHAKHA_NAMES
 
@@ -59,7 +60,7 @@ if not raw_df.empty:
     st.subheader("🗑️ Delete Entry")
     row_options = raw_df[["id", "name", "phone"]].astype(str)
     row_labels = row_options.apply(lambda x: f"{x['id']} - {x['name']} ({x['phone']})", axis=1)
-    selected_index = st.selectbox("Select Entry to Delete", options=row_labels.index, format_func=row_labels.__getitem__)
+    selected_index = st.selectbox("Select Entry to Delete", options=raw_df.index, format_func=row_labels.__getitem__)
     if st.button("Confirm Delete"):
         delete_id = int(raw_df.loc[selected_index]["id"])
         delete_from_db(delete_id)
@@ -68,7 +69,7 @@ if not raw_df.empty:
 
     # --- Edit Entry ---
     st.subheader("✏️ Edit Entry")
-    edit_index = st.selectbox("Select Entry to Edit", options=row_labels.index, format_func=row_labels.__getitem__, key="edit_select")
+    edit_index = st.selectbox("Select Entry to Edit", options=raw_df.index, format_func=row_labels.__getitem__, key="edit_select")
     selected_row = raw_df.loc[edit_index]
 
     with st.form("edit_form"):
@@ -94,7 +95,6 @@ if not raw_df.empty:
             st.rerun()
 
     # --- Push to API ---
-      # --- Push to API ---
     st.subheader("📤 Push to API")
     PRANT_ID = "668cfdff529dc546a1f20929"
     VIBHAG_ID = "668cfe2b529dc546a1f2092b"
@@ -106,8 +106,6 @@ if not raw_df.empty:
         for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
-
-                # Convert vasati/upavasati names to IDs
                 vasati_id = get_id_by_name(row_dict.get("vasati"))
                 upavasati_id = get_id_by_name(row_dict.get("upavasati"))
 
@@ -140,12 +138,15 @@ if not raw_df.empty:
                     "upavasati": upavasati_id,
                 }
 
+                # Remove empty strings or nulls if not needed by API
+                payload = {k: v for k, v in payload.items() if v not in [None, "", "NaN", "nan"]}
+
                 ok, _ = submit_entry(payload)
                 if ok:
                     success += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception:
                 failed += 1
 
         st.success(f"✅ Uploaded: {success} entries | ❌ Failed: {failed}")
