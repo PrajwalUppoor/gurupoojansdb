@@ -158,7 +158,9 @@ if not raw_df.empty:
   -H 'referer: https://kardakshinprant.pinkrafter.in/addSSDetails' \\
   -H 'user-agent: Mozilla/5.0' \\
   -d '{json.dumps(payload, ensure_ascii=False)}'"""
-                print("\n📤 CURL COMMAND:\n", curl_cmd)
+                with st.expander(f"📤 Payload Preview: {row_dict.get('name')}"):
+                     st.code(curl_cmd, language="bash")
+
 
                 ok, res = submit_entry(payload)
                 if ok:
