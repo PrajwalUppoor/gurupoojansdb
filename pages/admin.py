@@ -115,6 +115,12 @@ if not raw_df.empty:
                 upavasati_list = get_entity_children(vasati_id) if vasati_id else []
                 upavasati_id = get_id_by_name(upavasati_list, row_dict.get("upavasati"))
 
+                with st.expander(f"🔍 Debug: {row_dict.get('name')}"):
+                    st.write("Vasati List:", vasati_list)
+                    st.write("Resolved Vasati ID:", vasati_id)
+                    st.write("Upavasati List:", upavasati_list)
+                    st.write("Resolved Upavasati ID:", upavasati_id)
+
                 if not vasati_id or not upavasati_id:
                     failed += 1
                     continue
