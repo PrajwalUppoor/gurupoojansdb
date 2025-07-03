@@ -1,7 +1,7 @@
 # pages/form.py
 import streamlit as st
 import requests
-from utils import save_row, save_to_db, get_entity_children, get_id_by_name
+from utils import save_to_db, get_entity_children, get_id_by_name
 
 # Constants
 PRANT_ID = "668cfdff529dc546a1f20929"
@@ -105,5 +105,4 @@ if st.button("Submit"):
             "otherResponsibility": otherResponsibility
         }
         save_to_db(row)
-        save_row(row, f"ssdata_{shakhe.lower()}.xlsx")
         st.success("✅ Submitted successfully!")
