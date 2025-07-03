@@ -78,7 +78,6 @@ profession = st.selectbox("Profession *", professions)
 work = st.text_input("Work Details (Company, Designation) *")
 sanghShikshan = st.selectbox("Sangh Shikshan *", shikshan_options, index=shikshan_options.index("ಇನ್ನೂ ಆಗಬೇಕಿದೆ / Yet to attend"))
 sanghaResponsibility = st.selectbox("Sangha Responsibility *", responsibility_options, index=responsibility_options.index("ಸ್ವಯಂಸೇವಕ/Swayamsevak"))
-shakhe = st.selectbox("Shake *", shakha_options)
 
 sanghOrganizationName = ""
 otherResponsibility = ""
@@ -88,7 +87,7 @@ if sanghaResponsibility == "ವಿವಿಧ ಕ್ಷೇತ್ರದ ಜವಾ�
     otherResponsibility = st.text_input("Please specify your responsibility *")
 elif sanghaResponsibility == "ಸಂಘ ಜವಾಬ್ದಾರಿ/Sangha Responsibility":
     otherResponsibility = st.text_input("Please specify your responsibility *")
-
+shakhe = st.selectbox("Shake *", shakha_options)
 # Fetch Vasati
 if "vasati_children" not in st.session_state:
     with st.spinner("Loading vasati options..."):
