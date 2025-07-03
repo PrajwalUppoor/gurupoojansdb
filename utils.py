@@ -30,15 +30,19 @@ def load_data():
     return [dict(zip(headers, [cell.value for cell in row])) for row in ws.iter_rows(min_row=2)]
 
 def save_row(row):
-    if not os.path.exists(EXCEL_FILE):
+    shakhe = row.get("shakhe", "General").replace(" ", "")
+    filename = f"ssdata_{shakhe}.xlsx"
+
+    if not os.path.exists(filename):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.append(list(row.keys()))
     else:
-        wb = openpyxl.load_workbook(EXCEL_FILE)
+        wb = openpyxl.load_workbook(filename)
         ws = wb.active
+
     ws.append(list(row.values()))
-    wb.save(EXCEL_FILE)
+    wb.save(filename)
 
 def delete_row(index):
     wb = openpyxl.load_workbook(EXCEL_FILE)
