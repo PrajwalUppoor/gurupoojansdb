@@ -137,6 +137,6 @@ if st.button("Submit"):
             "sanghOrganizationName": sanghOrganizationName,
             "otherResponsibility": otherResponsibility
         }
-
-        save_row(data, f"ssdata_{shakhe.lower()}.xlsx")
+        save_to_db(data)
+        #save_row(data, f"ssdata_{shakhe.lower()}.xlsx")
         st.success("✅ Data submitted and saved to Excel successfully.")
