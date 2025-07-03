@@ -3,6 +3,18 @@ import pandas as pd
 from utils import load_data, submit_entry, delete_row, map_ids_to_names
 import plotly.express as px
 import os
+from db import SessionLocal
+from models import Swayamsevak
+import pandas as pd
+
+def load_data(shakhe=None):
+    db = SessionLocal()
+    query = db.query(Swayamsevak)
+    if shakhe:
+        query = query.filter(Swayamsevak.shakhe == shakhe)
+    rows = query.all()
+    db.close()
+    return pd.DataFrame([row.__dict__ for row in rows])
 
 st.set_page_config(
     page_title="Admin – Guru Pooja",
