@@ -49,7 +49,7 @@ def refresh_table():
         st.session_state.rows = load_data(selected_file)
         df = pd.DataFrame(st.session_state.rows)
         if not df.empty:
-            df.columns = [col.strip().lower() for col in df.columns]  # Normalize columns
+            df.columns = [col.strip().lower() for col in df.columns]
             df = map_ids_to_names(df)
         st.session_state.df = df
     else:
