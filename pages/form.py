@@ -10,7 +10,6 @@ PRANT_ID = "668cfdff529dc546a1f20929"
 VIBHAG_ID = "668d001d529dc546a1f23148"
 BHAG_ID = "668d0094529dc546a1f2409c"
 NAGAR_ID = "668d00a0529dc546a1f242e0"
-EXCEL_FILE = "ssdata.xlsx"
 
 HEADERS = {
     "accept": "application/json",
@@ -31,22 +30,6 @@ def get_id_by_name(children, name):
         if child["name"].strip().lower() == name.strip().lower():
             return child["_id"]
     return None
-
-# Excel Helper
-def save_to_excel(data):
-    if not os.path.exists(EXCEL_FILE):
-        wb = Workbook()
-        ws = wb.active
-        ws.append(list(data.keys()))
-    else:
-        wb = openpyxl.load_workbook(EXCEL_FILE)
-        ws = wb.active
-    ws.append(list(data.values()))
-    wb.save(EXCEL_FILE)
-
-def submit_to_api(data):
-    response = requests.post("https://kardakshinprant.pinkrafter.in/api/createSSData", headers=HEADERS, json=data)
-    return response.status_code == 200, response.text
 
 # Dropdown Values
 blood_groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
@@ -73,6 +56,10 @@ responsibility_options = [
     "ವಿವಿಧ ಕ್ಷೇತ್ರದ ಜವಾಬ್ದಾರಿ/Vividh Khsetra Responsibility",
     "ಸ್ವಯಂಸೇವಕ/Swayamsevak"
 ]
+shakha_options = [
+    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva",
+    "Keshava", "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
+]
 
 # Title
 st.title("SwayamSevak Information- RSS Padmanabhanagara")
@@ -91,12 +78,18 @@ profession = st.selectbox("Profession *", professions)
 work = st.text_input("Work Details (Company, Designation) *")
 sanghShikshan = st.selectbox("Sangh Shikshan *", shikshan_options, index=shikshan_options.index("ಇನ್ನೂ ಆಗಬೇಕಿದೆ / Yet to attend"))
 sanghaResponsibility = st.selectbox("Sangha Responsibility *", responsibility_options, index=responsibility_options.index("ಸ್ವಯಂಸೇವಕ/Swayamsevak"))
-shakha_options = [
-    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva",
-    "Keshava", "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
-]
 shakhe = st.selectbox("Shake *", shakha_options)
-# Fetch Vasati ONCE
+
+sanghOrganizationName = ""
+otherResponsibility = ""
+
+if sanghaResponsibility == "ವಿವಿಧ ಕ್ಷೇತ್ರದ ಜವಾಬ್ದಾರಿ/Vividh Khsetra Responsibility":
+    sanghOrganizationName = st.text_input("Organization Name *")
+    otherResponsibility = st.text_input("Please specify your responsibility *")
+elif sanghaResponsibility == "ಸಂಘ ಜವಾಬ್ದಾರಿ/Sangha Responsibility":
+    otherResponsibility = st.text_input("Please specify your responsibility *")
+
+# Fetch Vasati
 if "vasati_children" not in st.session_state:
     with st.spinner("Loading vasati options..."):
         st.session_state.vasati_children = get_entity_children(NAGAR_ID)
@@ -104,11 +97,9 @@ if "vasati_children" not in st.session_state:
         st.session_state.vasati_name = st.session_state.vasati_names[0]
         st.session_state.vasati_id = get_id_by_name(st.session_state.vasati_children, st.session_state.vasati_name)
 
-# Vasati select (fixed list)
 selected_vasati = st.selectbox("Vasati *", st.session_state.vasati_names, key="vasati_name")
 st.session_state.vasati_id = get_id_by_name(st.session_state.vasati_children, selected_vasati)
 
-# Update Upavasati based on vasati
 with st.spinner("Loading upavasati options..."):
     upavasati_children = get_entity_children(st.session_state.vasati_id)
     upavasati_names = [u["name"] for u in upavasati_children]
@@ -121,9 +112,6 @@ with st.spinner("Loading upavasati options..."):
         st.warning("No upavasatis found.")
         upavasati_id = None
 
-# Inputs
-
-
 # Submit
 if st.button("Submit"):
     required_fields = [name, phone, address1, address2, address3, pincode, dob, work]
@@ -131,6 +119,12 @@ if st.button("Submit"):
         st.error("❌ Please fill all the mandatory (*) fields.")
     elif not st.session_state.vasati_id or not upavasati_id:
         st.error("❌ Vasati or Upavasati selection failed.")
+    elif (
+        sanghaResponsibility == "ವಿವಿಧ ಕ್ಷೇತ್ರದ ಜವಾಬ್ದಾರಿ/Vividh Khsetra Responsibility" and (not sanghOrganizationName or not otherResponsibility)
+    ) or (
+        sanghaResponsibility == "ಸಂಘ ಜವಾಬ್ದಾರಿ/Sangha Responsibility" and not otherResponsibility
+    ):
+        st.error("❌ Please fill all required responsibility-related fields.")
     else:
         data = {
             "prant": PRANT_ID, "vibhag": VIBHAG_ID, "bhag": BHAG_ID,
@@ -141,8 +135,9 @@ if st.button("Submit"):
             "education": education, "otherEducation": "", "profession": profession,
             "otherProfession": "", "work": work, "sanghShikshan": sanghShikshan,
             "sanghaResponsibility": sanghaResponsibility,
-            "sanghOrganizationName": "", "otherResponsibility": ""
+            "sanghOrganizationName": sanghOrganizationName,
+            "otherResponsibility": otherResponsibility
         }
 
-        save_row(data)       
+        save_row(data, f"{shakhe.lower()}.xlsx")
         st.success("✅ Data submitted and saved to Excel successfully.")
