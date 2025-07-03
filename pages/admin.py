@@ -107,8 +107,13 @@ if not raw_df.empty:
         for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
-                vasati_id = get_id_by_name(row_dict.get("vasati"))
-                upavasati_id = get_id_by_name(row_dict.get("upavasati"))
+                # Get all vasatis under Nagar
+                vasati_list = get_entity_children(NAGAR_ID)
+                vasati_id = get_id_by_name(vasati_list, row_dict.get("vasati"))
+
+                # Get upavasatis under the resolved vasati
+                upavasati_list = get_entity_children(vasati_id) if vasati_id else []
+                upavasati_id = get_id_by_name(upavasati_list, row_dict.get("upavasati"))
 
                 if not vasati_id or not upavasati_id:
                     failed += 1
