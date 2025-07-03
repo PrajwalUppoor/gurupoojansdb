@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils import load_data, submit_entry, delete_row, map_ids_to_names
 import plotly.express as px
-import glob
+import os
 
 st.set_page_config(
     page_title="Admin – Guru Pooja",
@@ -34,19 +34,27 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
     st.rerun()
 
-# --- Select Shake File ---
-shake_files = sorted(glob.glob("ssdata_*.xlsx"))
-shake_names = [f.split("_")[1].replace(".xlsx", "") for f in shake_files]
-selected_shake = st.selectbox("📂 Select Shake to Manage", shake_names)
-selected_file = f"ssdata_{selected_shake}.xlsx"
+# --- Shake Files ---
+SHAKES = [
+    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva", "Keshava",
+    "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
+]
+
+selected_shake = st.selectbox("📂 Select Shake", SHAKES)
+selected_file = f"{selected_shake.lower()}.xlsx"
 
 # --- Load Data ---
 def refresh_table():
-    st.session_state.rows = load_data(selected_file)
-    df = pd.DataFrame(st.session_state.rows)
-    df.columns = [col.strip().lower() for col in df.columns]
-    df = map_ids_to_names(df)
-    st.session_state.df = df
+    if os.path.exists(selected_file):
+        st.session_state.rows = load_data(selected_file)
+        df = pd.DataFrame(st.session_state.rows)
+        if not df.empty:
+            df.columns = [col.strip().lower() for col in df.columns]  # Normalize columns
+            df = map_ids_to_names(df)
+        st.session_state.df = df
+    else:
+        st.session_state.rows = []
+        st.session_state.df = pd.DataFrame()
 
 if "rows" not in st.session_state:
     refresh_table()
@@ -55,7 +63,7 @@ rows = st.session_state.rows
 df = st.session_state.df
 
 # --- Display All Submissions ---
-st.subheader(f"📋 Submissions for Shake: {selected_shake}")
+st.subheader("📋 All Submissions")
 if df.empty:
     st.info("No data available.")
 else:
@@ -64,8 +72,7 @@ else:
 # --- Delete Section ---
 st.markdown("### 🗑️ Delete an Entry")
 if not df.empty:
-    delete_index = st.selectbox("Select row to delete (by index)", df.index,
-        format_func=lambda i: f"{df.loc[i, 'name']} ({df.loc[i, 'phone']})")
+    delete_index = st.selectbox("Select row to delete (by index)", df.index, format_func=lambda i: f"{df.loc[i, 'name']} ({df.loc[i, 'phone']})")
     if st.button("Confirm Delete"):
         delete_row(delete_index, selected_file)
         st.success(f"✅ Deleted: {df.loc[delete_index, 'name']}")
@@ -74,11 +81,11 @@ if not df.empty:
 
 # --- Download Full CSV ---
 csv_full = df.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Download Shake Data as CSV", csv_full, f"ssdata_{selected_shake}.csv", "text/csv")
+st.download_button("⬇️ Download All Data as CSV", csv_full, selected_file.replace(".xlsx", ".csv"), "text/csv")
 
-# --- Upload to API ---
-st.markdown("### 📤 Push This Shake's Data to Website")
-if st.button("Upload This Shake"):
+# --- Upload All to API ---
+st.markdown("### 📤 Push Shake Data to Website")
+if st.button("Upload Shake Data"):
     success, failed = 0, 0
     for row in rows:
         ok, msg = submit_entry(row)
@@ -116,24 +123,21 @@ with st.form("filter_form"):
     if clear:
         st.experimental_rerun()
 
-# --- Result Count ---
 st.markdown(f"📦 **Total Filtered Results: {len(filtered_df)}**")
 
-# --- Pagination ---
 PAGE_SIZE = 10
 total_pages = (len(filtered_df) - 1) // PAGE_SIZE + 1
 page = st.number_input("Page", 1, max(1, total_pages), step=1)
+
 start = (page - 1) * PAGE_SIZE
 end = start + PAGE_SIZE
 paginated_df = filtered_df.iloc[start:end]
 
 st.dataframe(paginated_df, use_container_width=True)
 
-# --- Download Filtered Data ---
 csv_filtered = filtered_df.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Download Filtered Results", csv_filtered, "filtered_data.csv", "text/csv")
+st.download_button("⬇️ Download Filtered Results", csv_filtered, f"filtered_{selected_shake.lower()}.csv", "text/csv")
 
-# --- Chart: Vasati Count ---
 st.markdown("### 📊 Vasati-wise Count")
 vasati_counts = df["vasati"].value_counts().reset_index()
 vasati_counts.columns = ["Vasati", "Count"]
