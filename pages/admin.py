@@ -109,11 +109,9 @@ if not raw_df.empty:
         for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
-                # Get all vasatis under Nagar
                 vasati_list = get_entity_children(NAGAR_ID)
                 vasati_id = get_id_by_name(vasati_list, row_dict.get("vasati"))
 
-                # Get upavasatis under the resolved vasati
                 upavasati_list = get_entity_children(vasati_id) if vasati_id else []
                 upavasati_id = get_id_by_name(upavasati_list, row_dict.get("upavasati"))
 
@@ -147,10 +145,8 @@ if not raw_df.empty:
                     "upavasati": upavasati_id,
                 }
 
-                # Remove empty/NaN
                 payload = {k: v for k, v in payload.items() if v not in [None, "", "NaN", "nan"]}
 
-                # Log the curl equivalent
                 curl_cmd = f"""curl -X POST https://kardakshinprant.pinkrafter.in/api/createSSData \\
   -H 'accept: application/json' \\
   -H 'content-type: application/json' \\
@@ -158,9 +154,10 @@ if not raw_df.empty:
   -H 'referer: https://kardakshinprant.pinkrafter.in/addSSDetails' \\
   -H 'user-agent: Mozilla/5.0' \\
   -d '{json.dumps(payload, ensure_ascii=False)}'"""
-                with st.expander(f"📤 Payload Preview: {row_dict.get('name')}"):
-                     st.code(curl_cmd, language="bash")
 
+                with st.expander(f"📤 Payload and CURL Preview: {row_dict.get('name')}"):
+                    st.code(json.dumps(payload, indent=2, ensure_ascii=False), language="json")
+                    st.code(curl_cmd, language="bash")
 
                 ok, res = submit_entry(payload)
                 if ok:
