@@ -3,6 +3,10 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+SHAKHA_NAMES = [
+    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva",
+    "Keshava", "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
+]
 
 class Swayamsevak(Base):
     __tablename__ = 'swayamsevaks'
