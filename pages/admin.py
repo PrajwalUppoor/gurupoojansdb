@@ -1,30 +1,13 @@
+# pages/admin.py
 import streamlit as st
 import pandas as pd
-from utils import load_data, submit_entry, delete_row, map_ids_to_names
-import plotly.express as px
 import os
-from db import SessionLocal
-from models import Swayamsevak
-import pandas as pd
+from utils import load_from_db, delete_from_db, submit_entry, map_ids_to_names, export_to_excel
+from models import SHAKHA_NAMES
 
-def load_data(shakhe=None):
-    db = SessionLocal()
-    query = db.query(Swayamsevak)
-    if shakhe:
-        query = query.filter(Swayamsevak.shakhe == shakhe)
-    rows = query.all()
-    db.close()
-    return pd.DataFrame([row.__dict__ for row in rows])
+st.set_page_config(page_title="Admin - Guru Pooja", layout="wide")
 
-st.set_page_config(
-    page_title="Admin – Guru Pooja",
-    layout="wide",
-    menu_items={"Get Help": None, "Report a bug": None, "About": None}
-)
-
-st.title("🔐 Admin Panel – Guru Pooja Utsava")
-
-# --- Admin Login ---
+# --- Login ---
 PASSWORD = st.secrets["admin"]["password"]
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -36,128 +19,42 @@ if not st.session_state.logged_in:
         st.success("✅ Logged in successfully")
         st.rerun()
     else:
-        st.warning("Incorrect password.")
         st.stop()
 
-# --- Sidebar Logout ---
 st.sidebar.markdown("👤 Logged in as **Admin**")
-st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Logout"):
+if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.rerun()
 
-# --- Shake Files ---
-SHAKES = [
-    "Nagagiri", "Maheshwara", "Chiranjeevi", "Vasudeva", "Keshava",
-    "Brindavana", "Arehalli", "Ramanjaneya", "Kanaka"
-]
+# --- Shake Select ---
+st.title("📋 Admin Panel - Guru Pooja")
+selected_shakhe = st.selectbox("Select Shake", SHAKHA_NAMES)
+df = load_from_db(selected_shakhe)
 
-selected_shake = st.selectbox("📂 Select Shake", SHAKES)
-selected_file = f"ssdata_{selected_shake.lower()}.xlsx"  # ✅ fixed file name
-
-# --- Load Data ---
-def refresh_table():
-    if os.path.exists(selected_file):
-        rows = load_data(selected_file)
-        df = pd.DataFrame(rows)
-        if not df.empty:
-            df.columns = [col.strip().lower() for col in df.columns]
-            df = map_ids_to_names(df)
-        st.session_state.rows = rows
-        st.session_state.df = df
-    else:
-        st.session_state.rows = []
-        st.session_state.df = pd.DataFrame()
-
-# --- Initialize session state ---
-if "df" not in st.session_state or "rows" not in st.session_state:
-    refresh_table()
-
-rows = st.session_state.rows
-df = st.session_state.df
-
-# Optional Debug Info
-st.caption(f"📦 File: `{selected_file}` — Rows loaded: `{len(rows)}`")
-
-# --- Display All Submissions ---
-st.subheader("📋 All Submissions")
-if df.empty:
-    st.info("No data available.")
-else:
+if not df.empty:
+    df = map_ids_to_names(df)
     st.dataframe(df, use_container_width=True)
 
-# --- Delete Section ---
-st.markdown("### 🗑️ Delete an Entry")
-if not df.empty:
-    delete_index = st.selectbox("Select row to delete (by index)", df.index, format_func=lambda i: f"{df.loc[i, 'name']} ({df.loc[i, 'phone']})")
+    # --- Download ---
+    if st.download_button("⬇ Download Excel", export_to_excel(df, selected_shakhe), file_name=f"{selected_shakhe}.xlsx"):
+        st.success("Excel downloaded!")
+
+    # --- Delete Entry ---
+    st.subheader("🗑️ Delete Entry")
+    idx_to_delete = st.selectbox("Choose Row to Delete", df.index)
     if st.button("Confirm Delete"):
-        delete_row(delete_index, selected_file)
-        st.success(f"✅ Deleted: {df.loc[delete_index, 'name']}")
-        refresh_table()
+        delete_from_db(df.loc[idx_to_delete]["id"])
+        st.success("Deleted successfully")
         st.rerun()
 
-# --- Download Full CSV ---
-csv_full = df.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Download All Data as CSV", csv_full, selected_file.replace(".xlsx", ".csv"), "text/csv")
-
-# --- Upload All to API ---
-st.markdown("### 📤 Push Shake Data to Website")
-if st.button("Upload Shake Data"):
-    success, failed = 0, 0
-    for row in rows:
-        ok, msg = submit_entry(row)
-        if ok:
-            success += 1
-        else:
-            failed += 1
-    st.success(f"✅ Upload complete: {success} success, {failed} failed")
-
-# --- Search & Filter Section ---
-st.markdown("---")
-st.subheader("🔍 Search by Vasati & Upavasati")
-
-if df.empty or "vasati" not in df.columns:
-    st.warning("No records available to search or filter yet.")
-    st.stop()
-
-with st.form("filter_form"):
-    vasatis = df["vasati"].dropna().unique()
-    selected_vasati = st.selectbox("Select Vasati", ["All"] + sorted(vasatis.tolist()))
-
-    filtered_df = df.copy()
-    if selected_vasati != "All":
-        filtered_df = filtered_df[filtered_df["vasati"] == selected_vasati]
-
-    upavasatis = filtered_df["upavasati"].dropna().unique()
-    selected_upavasati = st.selectbox("Select Upavasati", ["All"] + sorted(upavasatis.tolist()))
-
-    if selected_upavasati != "All":
-        filtered_df = filtered_df[filtered_df["upavasati"] == selected_upavasati]
-
-    clear = st.form_submit_button("🔁 Clear Filters")
-    submit = st.form_submit_button("🔍 Apply Filters")
-
-    if clear:
-        st.experimental_rerun()
-
-st.markdown(f"📦 **Total Filtered Results: {len(filtered_df)}**")
-
-PAGE_SIZE = 10
-total_pages = (len(filtered_df) - 1) // PAGE_SIZE + 1
-page = st.number_input("Page", 1, max(1, total_pages), step=1)
-
-start = (page - 1) * PAGE_SIZE
-end = start + PAGE_SIZE
-paginated_df = filtered_df.iloc[start:end]
-
-st.dataframe(paginated_df, use_container_width=True)
-
-csv_filtered = filtered_df.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Download Filtered Results", csv_filtered, f"filtered_{selected_shake.lower()}.csv", "text/csv")
-
-# --- Vasati-wise Count Chart ---
-st.markdown("### 📊 Vasati-wise Count")
-vasati_counts = df["vasati"].value_counts().reset_index()
-vasati_counts.columns = ["Vasati", "Count"]
-chart = px.bar(vasati_counts, x="Vasati", y="Count", title="Number of Entries by Vasati", color="Vasati", height=400)
-st.plotly_chart(chart, use_container_width=True)
+    # --- Submit to API ---
+    st.subheader("📤 Push to API")
+    if st.button("Upload Shake Data"):
+        success, failed = 0, 0
+        for _, row in df.iterrows():
+            ok, _ = submit_entry(row.to_dict())
+            if ok: success += 1
+            else: failed += 1
+        st.success(f"Uploaded: ✅ {success}, ❌ {failed}")
+else:
+    st.info("No entries yet for this Shake.")
