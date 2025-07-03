@@ -6,7 +6,6 @@ import pandas as pd
 # --- Constants ---
 NAGAR_ID = "668d00a0529dc546a1f242e0"  # Padmanabhanagar
 ENTITY_URL = "https://kardakshinprant.pinkrafter.in/api/entityChildren"
-EXCEL_FILE = "ssdata.xlsx"
 
 HEADERS = {
     "accept": "application/json",
@@ -19,36 +18,36 @@ HEADERS = {
 _entity_cache = {}
 
 # --- Excel Operations ---
-def load_data():
-    if not os.path.exists(EXCEL_FILE):
+def save_row(row, file_path):
+    """Save a single row (dict) to the specified Excel file."""
+    if not os.path.exists(file_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(list(row.keys()))
+    else:
+        wb = openpyxl.load_workbook(file_path)
+        ws = wb.active
+
+    ws.append(list(row.values()))
+    wb.save(file_path)
+
+def load_data(file_path):
+    """Load data from an Excel file into a list of dictionaries."""
+    if not os.path.exists(file_path):
         return []
 
-    wb = openpyxl.load_workbook(EXCEL_FILE)
+    wb = openpyxl.load_workbook(file_path)
     ws = wb.active
     headers = [str(cell.value).strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
     return [dict(zip(headers, [cell.value for cell in row])) for row in ws.iter_rows(min_row=2)]
 
-def save_row(row):
-    shakhe = row.get("shakhe", "General").replace(" ", "")
-    filename = f"ssdata_{shakhe}.xlsx"
-
-    if not os.path.exists(filename):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.append(list(row.keys()))
-    else:
-        wb = openpyxl.load_workbook(filename)
-        ws = wb.active
-
-    ws.append(list(row.values()))
-    wb.save(filename)
-
-def delete_row(index):
-    wb = openpyxl.load_workbook(EXCEL_FILE)
+def delete_row(index, file_path):
+    """Delete a row (by index) from a specified Excel file."""
+    wb = openpyxl.load_workbook(file_path)
     ws = wb.active
-    ws.delete_rows(index + 2)  # +2 to account for header row and 0-based index
-    wb.save(EXCEL_FILE)
+    ws.delete_rows(index + 2)  # +2 to skip header and match 0-indexing
+    wb.save(file_path)
 
 # --- API Calls ---
 def submit_entry(row):
@@ -97,7 +96,9 @@ def map_ids_to_names(df):
     def resolve(val):
         return id_name_map.get(val, val)
 
-    df["vasati"] = df["vasati"].apply(resolve)
-    df["upavasati"] = df["upavasati"].apply(resolve)
+    if "vasati" in df.columns:
+        df["vasati"] = df["vasati"].apply(resolve)
+    if "upavasati" in df.columns:
+        df["upavasati"] = df["upavasati"].apply(resolve)
 
     return df
