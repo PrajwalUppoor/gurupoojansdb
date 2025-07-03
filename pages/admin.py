@@ -41,26 +41,31 @@ SHAKES = [
 ]
 
 selected_shake = st.selectbox("📂 Select Shake", SHAKES)
-selected_file = f"ssdata_{selected_shake.lower()}.xlsx"
+selected_file = f"ssdata_{selected_shake.lower()}.xlsx"  # ✅ fixed file name
 
 # --- Load Data ---
 def refresh_table():
     if os.path.exists(selected_file):
-        st.session_state.rows = load_data(selected_file)
-        df = pd.DataFrame(st.session_state.rows)
+        rows = load_data(selected_file)
+        df = pd.DataFrame(rows)
         if not df.empty:
             df.columns = [col.strip().lower() for col in df.columns]
             df = map_ids_to_names(df)
+        st.session_state.rows = rows
         st.session_state.df = df
     else:
         st.session_state.rows = []
         st.session_state.df = pd.DataFrame()
 
-if "rows" not in st.session_state or "df" not in st.session_state:
+# --- Initialize session state ---
+if "df" not in st.session_state or "rows" not in st.session_state:
     refresh_table()
 
 rows = st.session_state.rows
 df = st.session_state.df
+
+# Optional Debug Info
+st.caption(f"📦 File: `{selected_file}` — Rows loaded: `{len(rows)}`")
 
 # --- Display All Submissions ---
 st.subheader("📋 All Submissions")
@@ -138,6 +143,7 @@ st.dataframe(paginated_df, use_container_width=True)
 csv_filtered = filtered_df.to_csv(index=False).encode("utf-8")
 st.download_button("⬇️ Download Filtered Results", csv_filtered, f"filtered_{selected_shake.lower()}.csv", "text/csv")
 
+# --- Vasati-wise Count Chart ---
 st.markdown("### 📊 Vasati-wise Count")
 vasati_counts = df["vasati"].value_counts().reset_index()
 vasati_counts.columns = ["Vasati", "Count"]
