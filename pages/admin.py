@@ -106,16 +106,26 @@ if not raw_df.empty:
     if st.button("Upload Shake Data"):
         success, failed = 0, 0
 
+        def safe_get_id_by_name(children, name):
+            if not name:
+                return None
+            name = name.strip().lower()
+            for child in children:
+                if child["name"].strip().lower() == name:
+                    return child["_id"]
+            return None
+
         for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
                 vasati_list = get_entity_children(NAGAR_ID)
-                vasati_id = get_id_by_name(vasati_list, row_dict.get("vasati"))
+                vasati_id = safe_get_id_by_name(vasati_list, row_dict.get("vasati"))
 
                 upavasati_list = get_entity_children(vasati_id) if vasati_id else []
-                upavasati_id = get_id_by_name(upavasati_list, row_dict.get("upavasati"))
+                upavasati_id = safe_get_id_by_name(upavasati_list, row_dict.get("upavasati"))
 
                 with st.expander(f"🔍 Debug: {row_dict.get('name')}"):
+                    st.write("Raw Vasati:", row_dict.get("vasati"))
                     st.write("Vasati List:", vasati_list)
                     st.write("Resolved Vasati ID:", vasati_id)
                     st.write("Upavasati List:", upavasati_list)
