@@ -3,7 +3,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base
 
-engine = create_engine("sqlite:///data.db")  # Or use PostgreSQL URI
+DATABASE_URL = "sqlite:///data.db"
+
+engine = create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(bind=engine)
 
 def init_db():
