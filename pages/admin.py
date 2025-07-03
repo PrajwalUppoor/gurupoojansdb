@@ -81,7 +81,7 @@ if not df.empty:
 
 # --- Download Full CSV ---
 csv_full = df.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Download All Data as CSV", csv_full, selected_file.replace(".xlsx", ".csv"), "text/csv")
+st.download_button("⬇️ Download All Data as CSV", csv_full, f"{selected_shake.lower()}.csv", "text/csv")
 
 # --- Upload All to API ---
 st.markdown("### 📤 Push Shake Data to Website")
