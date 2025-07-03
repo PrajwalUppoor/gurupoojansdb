@@ -7,6 +7,14 @@ import openpyxl
 import os
 import requests
 
+
+def save_to_db(data):
+    db = SessionLocal()
+    entry = Swayamsevak(**data)
+    db.add(entry)
+    db.commit()
+    db.close()
+
 # --- DB Load ---
 def load_from_db(shakhe=None):
     db = SessionLocal()
