@@ -103,7 +103,7 @@ if not raw_df.empty:
     if st.button("Upload Shake Data"):
         success, failed = 0, 0
 
-        for _, row in df.iterrows():
+        for _, row in raw_df.iterrows():
             try:
                 row_dict = row.to_dict()
 
