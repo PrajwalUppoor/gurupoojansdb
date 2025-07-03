@@ -41,7 +41,7 @@ SHAKES = [
 ]
 
 selected_shake = st.selectbox("📂 Select Shake", SHAKES)
-selected_file = f"{selected_shake.lower()}.xlsx"
+selected_file = f"ssdata_{selected_shake.lower()}.xlsx"
 
 # --- Load Data ---
 def refresh_table():
